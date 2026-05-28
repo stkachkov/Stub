@@ -1,5 +1,12 @@
 package org.example.stub.controller;
 
+import jakarta.validation.Valid;
+import org.example.stub.dto.GetResponseDto;
+import org.example.stub.dto.PostRequestDto;
+import org.example.stub.dto.PostResponseDto;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,45 +17,52 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/api/data")
 public class RestControllerStub {
 
-    @GetMapping
-    public ResponseEntity<Map<String, String>> getData() throws InterruptedException {
-        long delay = 1000 + (long) (Math.random() * 1000);
-        TimeUnit.MILLISECONDS.sleep(delay);
+    private static final Logger logger = LoggerFactory.getLogger(RestControllerStub.class);
 
-        Map<String, String> response = new LinkedHashMap<>();
-        response.put("login", "Login1");
-        response.put("status", "ok");
+    @Value("${stub.delay.base-ms:1000}")
+    private long baseDelayMs;
+
+    @Value("${stub.delay.random-ms:1000}")
+    private int randomDelayMs;
+
+    private final Random random = new Random();
+
+    private void applyRandomDelay() {
+        try {
+            long delay = baseDelayMs + (randomDelayMs > 0 ? random.nextInt(randomDelayMs) : 0);
+            TimeUnit.MILLISECONDS.sleep(delay);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+
+            logger.warn("Процесс задержки был прерван", e);
+            throw new RuntimeException("Процесс задержки был прерван", e);
+        }
+    }
+
+    @GetMapping
+    public ResponseEntity<GetResponseDto> getData() {
+        applyRandomDelay();
+
+        GetResponseDto response = new GetResponseDto("Login1", "ok");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping
-    public ResponseEntity<Map<String, String>> postData(@RequestBody Map<String, String> requestBody) throws InterruptedException {
-        long delay = 1000 + (long) (Math.random() * 1000);
-        TimeUnit.MILLISECONDS.sleep(delay);
+    public ResponseEntity<PostResponseDto> postData(@Valid @RequestBody PostRequestDto requestBody) {
+        applyRandomDelay();
 
-        String login = requestBody.get("login");
-        String password = requestBody.get("password");
-
-        if (login == null || login.isEmpty() || password == null || password.isEmpty()) {
-            Map<String, String> errorResponse = new LinkedHashMap<>();
-            errorResponse.put("error", "Login and password are required");
-            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-        }
-
+        String login = requestBody.getLogin();
+        String password = requestBody.getPassword();
         String currentDateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
-        Map<String, String> response = new LinkedHashMap<>();
-        response.put("login", login);
-        response.put("password", password);
-        response.put("date", currentDateTime);
+        PostResponseDto response = new PostResponseDto(login, password, currentDateTime);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
