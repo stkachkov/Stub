@@ -22,7 +22,7 @@ public class DataBaseWorker {
     }
 
     public UserDto getUserByLogin(String login) {
-        String sql = "SELECT u.login u.password, ue.email, u.registration_date FROM users u JOIN user_emails ue ON u.login = ue.login WHERE u.login = ?";
+        String sql = "SELECT u.login, u.password, ue.email, u.registration_date FROM users u JOIN user_emails ue ON u.login = ue.login WHERE u.login = ?";
 
         return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
             Timestamp timestamp = rs.getTimestamp("registration_date");
