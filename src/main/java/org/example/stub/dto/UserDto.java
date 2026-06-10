@@ -7,8 +7,9 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PostResponseDto {
+public class UserDto {
     private String login;
     private String password;
+    private String email;
     private String date;
 }

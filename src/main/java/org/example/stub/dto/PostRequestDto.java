@@ -15,4 +15,7 @@ public class PostRequestDto {
 
     @NotBlank(message = "password is required and cannot be empty")
     private String password;
+
+    @NotBlank(message = "email is required and cannot be empty")
+    private String email;
 }
